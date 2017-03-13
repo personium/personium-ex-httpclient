@@ -28,6 +28,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -64,11 +65,12 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * get.
      * @param uri String
      * @param headers JSONObject
+     * @param respondsAsStream true:stream/false:text
      * @return JSONObject
      */
 
     @JSFunction
-    public NativeObject get(String uri, NativeObject headers) {
+    public NativeObject get(String uri, NativeObject headers, boolean respondsAsStream) {
     	NativeObject result = null;
 
         if (null == uri || uri.isEmpty()) {
@@ -100,19 +102,22 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 	        	headersJson.put(header.getName(), header.getValue());
 	        }
 
-	        // get Body
-	        String body = "";
-	        HttpEntity entity = res.getEntity();
-            if (entity != null) {
-        		// Text only.
-    	    	body = EntityUtils.toString(entity, "UTF-8");
-			}
-
 	        // set NativeObject
             result = new NativeObject();
 	        result.put("status", result, status);
 	        result.put("headers", result, headersJson.toString());
-	        result.put("body", result, body);
+
+	        // get Body
+	        HttpEntity entity = res.getEntity();
+            if (entity != null) {
+            	if (respondsAsStream) {
+            		// Stream.
+            		result.put("body", result, new BufferedHttpEntity(res.getEntity()).getContent());
+            	} else {
+                	// Text.
+        	        result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
+            	}
+			}
 
 	    } catch (Exception e) {
             String message = "An error occurred.";
