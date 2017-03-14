@@ -21,7 +21,6 @@ import io.personium.engine.extension.support.ExtensionErrorConstructor;
 import io.personium.engine.extension.support.ExtensionLogger;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map.Entry;
 

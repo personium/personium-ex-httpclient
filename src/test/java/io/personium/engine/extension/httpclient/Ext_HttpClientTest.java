@@ -37,14 +37,10 @@ public class Ext_HttpClientTest {
 
 	// http_get
 	private static final String URI_HTTP_GET_TEXT = "http://get.example/";
-// local test
-	private static final String URI_HTTP_GET_STREAM = "http://localhost:8080/oauth-client2/images/test01.jpg";
-//	private static final String URI_HTTP_GET_STREAM = "https://demo.personium.io/baas-demo/1/flags/JP.png";
+	private static final String URI_HTTP_GET_STREAM = "https://demo.personium.io/baas-demo/1/flags/JP.png";
 
 	// http_post
-// local test
-	private static final String URI_HTTP_POST_TEXT = "http://localhost:8080/oauth-client2/handler";
-//	private static final String URI_HTTP_POST_TEXT = "http://post.example/";
+	private static final String URI_HTTP_POST_TEXT = "http://post.example/";
 
 	private static final String POST_PARAMS_TEXT = "key1=value1&key2=value2&key3=value3";
 	private static final String POST_CONTENT_TYPE = "application/x-www-form-urlencoded;";
