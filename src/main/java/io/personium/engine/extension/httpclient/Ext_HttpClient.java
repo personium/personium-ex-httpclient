@@ -20,6 +20,9 @@ import io.personium.engine.extension.support.AbstractExtensionScriptableObject;
 import io.personium.engine.extension.support.ExtensionErrorConstructor;
 import io.personium.engine.extension.support.ExtensionLogger;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Map.Entry;
 
 import org.apache.http.Header;
@@ -112,7 +115,8 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             if (entity != null) {
             	if (respondsAsStream) {
             		// Stream.
-            		result.put("body", result, new BufferedHttpEntity(res.getEntity()).getContent());
+            		InputStream is = new BufferedInputStream(new BufferedHttpEntity(res.getEntity()).getContent());
+            		result.put("body", result, is);
             	} else {
                 	// Text.
         	        result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
@@ -139,7 +143,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      */
     @SuppressWarnings("unchecked")
     @JSFunction
-	public NativeObject post(String uri, String body, String contentType, NativeObject headers) {
+	public NativeObject post(String uri, String body, String contentType, NativeObject headers, boolean respondsAsStream) {
     	NativeObject result = null;
 
         if (null == uri || uri.isEmpty()) {
@@ -163,8 +167,21 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
 	        // set params from body
         	request = new HttpPost(uri);
-        	HttpEntity entity = new ByteArrayEntity(body.getBytes("UTF-8"));
-        	request.setEntity(entity);
+        	if (respondsAsStream) {
+        		// Stream.
+//        	    File file = new File("more.txt");
+//        	    FileBody fileBody = new FileBody(file);
+//                FormBodyPart bodyPart = new FormBodyPart("body", fileBody);
+//                bodyPart.addField("filename", file.getName());
+//            	ContentBody contentBody = (ContentBody)bodyPart;
+//                MultipartEntity entity = new MultipartEntity();
+//                entity.addPart("body", contentBody);
+//                request.setEntity(entity);
+        	} else {
+            	// Text.
+            	request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
+        	}
+
 
         	// set contentType
 	        request.setHeader("Content-Type", contentType);

@@ -18,22 +18,14 @@ package io.personium.engine.extension.httpclient;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpStatus;
-import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -45,17 +37,25 @@ public class Ext_HttpClientTest {
 
 	// http_get
 	private static final String URI_HTTP_GET_TEXT = "http://get.example/";
-	private static final String URI_HTTP_GET_STREAM = "https://demo.personium.io/baas-demo/1/flags/JP.png";
+// local test
+	private static final String URI_HTTP_GET_STREAM = "http://localhost:8080/oauth-client2/images/test01.jpg";
+//	private static final String URI_HTTP_GET_STREAM = "https://demo.personium.io/baas-demo/1/flags/JP.png";
 
 	// http_post
-	private static final String URI_HTTP_POST_TEXT = "http://post.example/";
-	private static final String POST_PARAMS = "key1=value1&key2=value2&key3=value3";
+// local test
+	private static final String URI_HTTP_POST_TEXT = "http://localhost:8080/oauth-client2/handler";
+//	private static final String URI_HTTP_POST_TEXT = "http://post.example/";
+
+	private static final String POST_PARAMS_TEXT = "key1=value1&key2=value2&key3=value3";
 	private static final String POST_CONTENT_TYPE = "application/x-www-form-urlencoded;";
 
 	// headers
 	private static final String HEADER_KEY = "Accept";
 	private static final String HEADER_VALUE = "application/json";
-	
+
+	private static final String POST_HEADER_KEY = "Content-Type";
+	private static final String POST_HEADER_VALUE = "application/octet-stream";
+
     @BeforeClass
     public static void beforeClass() {
 
@@ -91,8 +91,9 @@ public class Ext_HttpClientTest {
     }
 
     @Test
-    public void http_stream() {
+    public void http_get_stream() {
     	NativeObject headers = new NativeObject();
+//    	headers.put(POST_HEADER_KEY, headers, POST_HEADER_VALUE);
     	headers.put(HEADER_KEY, headers, HEADER_VALUE);
 
     	Ext_HttpClient ext_httpClient = new Ext_HttpClient();
@@ -107,9 +108,7 @@ public class Ext_HttpClientTest {
     	InputStream is = (InputStream)result.get("body");
 
     	// stream to write file
-//    	  String IMAGE_FILEPATH = "/tmp/";
-//    	  String IMAGE_FILENAME = "JP.png";
-//        writeInputStream(is, IMAGE_FILEPATH, IMAGE_FILENAME);
+        writeInputStream(is, "d:/personium/", "test01.jpg");
 
     	assertEquals(Integer.parseInt(res_status), HttpStatus.SC_OK);
     }
@@ -122,11 +121,34 @@ public class Ext_HttpClientTest {
     	Ext_HttpClient ext_httpClient = new Ext_HttpClient();
 
     	/**
-         * ext_httpClient.post
-         * String uri, String body, String contentType, NativeObject headers
+         * ext_httpClient.post text
+         * String uri, String body, String contentType,
+         * NativeObject headers, boolean respondsAsStream
          */
-    	NativeObject result = ext_httpClient.post(URI_HTTP_POST_TEXT, POST_PARAMS,
-    			POST_CONTENT_TYPE, headers);
+    	NativeObject result = ext_httpClient.post(URI_HTTP_POST_TEXT, POST_PARAMS_TEXT,
+    			POST_CONTENT_TYPE, headers, false);
+    	String res_status = (String)result.get("status");
+    	String res_body = (String)result.get("body");
+    	String res_headers = (String)result.get("headers");
+
+    	assertEquals(Integer.parseInt(res_status), HttpStatus.SC_OK);
+    }
+
+    @Test
+    public void http_post_stream() {
+    	NativeObject headers = new NativeObject();
+    	headers.put(HEADER_KEY, headers, HEADER_VALUE);
+
+    	Ext_HttpClient ext_httpClient = new Ext_HttpClient();
+
+    	/**
+         * ext_httpClient.post stream
+         * String uri, String body, String contentType,
+         * NativeObject headers, boolean respondsAsStream
+         */
+    	String streamBody = "";
+    	NativeObject result = ext_httpClient.post(URI_HTTP_POST_TEXT, streamBody,
+    			POST_CONTENT_TYPE, headers, true);
     	String res_status = (String)result.get("status");
     	String res_body = (String)result.get("body");
     	String res_headers = (String)result.get("headers");
