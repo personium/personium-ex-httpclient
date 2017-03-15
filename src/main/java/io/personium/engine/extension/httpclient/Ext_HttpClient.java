@@ -159,7 +159,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
     	return post(uri, headers, contentType, null, is);
     }
 
-	private NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
+    private NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
