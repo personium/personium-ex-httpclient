@@ -20,7 +20,6 @@ import io.personium.engine.extension.support.AbstractExtensionScriptableObject;
 import io.personium.engine.extension.support.ExtensionErrorConstructor;
 import io.personium.engine.extension.support.ExtensionLogger;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.Map.Entry;
 
@@ -32,6 +31,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -59,8 +59,8 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      */
     @JSConstructor
     public Ext_HttpClient() {
-    	ExtensionLogger logger = new ExtensionLogger(this.getClass());
-    	setLogger(this.getClass(), logger);
+        ExtensionLogger logger = new ExtensionLogger(this.getClass());
+        setLogger(this.getClass(), logger);
     }
 
     /**
@@ -70,168 +70,244 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param respondsAsStream true:stream/false:text
      * @return JSONObject
      */
-
+    @SuppressWarnings("unchecked")
     @JSFunction
     public NativeObject get(String uri, NativeObject headers, boolean respondsAsStream) {
-    	NativeObject result = null;
+        NativeObject result = null;
 
         if (null == uri || uri.isEmpty()) {
-		    String message = "URL parameter is not set.";
-		    this.getLogger().info(message);
-		    throw ExtensionErrorConstructor.construct(message);
+            String message = "URL parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
         }
 
-		try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
-    		HttpGet request = new HttpGet(uri);
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
+            HttpGet request = new HttpGet(uri);
 
-	        // set request headers
-	        if (null != headers) {
-	        	for (Entry<Object, Object> e : headers.entrySet()){
-	        		request.addHeader(e.getKey().toString(), e.getValue().toString());
-        		}
-	        }
+            // Set request headers.
+            if (null != headers) {
+                for (Entry<Object, Object> e : headers.entrySet()){
+                    request.addHeader(e.getKey().toString(), e.getValue().toString());
+                }
+            }
 
-	        HttpResponse res = null;
-	        res = httpclient.execute(request);
+            HttpResponse res = null;
+            res = httpclient.execute(request);
 
-	    	// Retrieve the status
-	        String status = String.valueOf(res.getStatusLine().getStatusCode());
+            // Retrieve the status.
+            int status = res.getStatusLine().getStatusCode();
+            if (status != HttpStatus.SC_OK) {
+                System.out.println("StatusCode:" + status);
+                return null;
+            }
 
-	        // Retrieve the response headers
-	        JSONObject headersJson = new JSONObject();
-	        Header[] resHeaders = res.getAllHeaders();
-	        for (Header header : resHeaders) {
-	        	headersJson.put(header.getName(), header.getValue());
-	        }
+            // Retrieve the response headers.
+            JSONObject res_headers = new JSONObject();
+            Header[] resHeaders = res.getAllHeaders();
+            for (Header header : resHeaders) {
+            	res_headers.put(header.getName(), header.getValue());
+            }
 
-	        // set NativeObject
+            // Set NativeObject.
             result = new NativeObject();
-	        result.put("status", result, status);
-	        result.put("headers", result, headersJson.toString());
-
-	        // get Body
-	        HttpEntity entity = res.getEntity();
+            result.put("status", result, (Number)status);
+            result.put("headers", result, (JSONObject)res_headers);
+            HttpEntity entity = res.getEntity();
             if (entity != null) {
-            	if (respondsAsStream) {
-            		// Stream.
-            		InputStream is = new BufferedInputStream(new BufferedHttpEntity(res.getEntity()).getContent());
-            		result.put("body", result, is);
-            	} else {
-                	// Text.
-        	        result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
-            	}
-			}
+                if (respondsAsStream) {
+                    // InputStream.
+                    result.put("body", result, new BufferedHttpEntity(res.getEntity()).getContent());
+                } else {
+                    // String.
+                    result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
+                }
+            }
 
-	    } catch (Exception e) {
+        } catch (Exception e) {
             String message = "An error occurred.";
             this.getLogger().warn(message, e);
             String errorMessage = String.format("%s Cause: [%s]",
-            		message, e.getClass().getName() + ": " + e.getMessage());
+                    message, e.getClass().getName() + ": " + e.getMessage());
             throw ExtensionErrorConstructor.construct(errorMessage);
-		}
+        }
         return result;
     }
 
     /**
      * Post.
      * @param uri String
-     * @param body String
-     * @param contentType String
      * @param headers NativeObject
+     * @param contentType String
+     * @param body String
      * @return NativeObject
      */
     @SuppressWarnings("unchecked")
     @JSFunction
-	public NativeObject post(String uri, String body, String contentType, NativeObject headers, boolean respondsAsStream) {
-    	NativeObject result = null;
+    public NativeObject post(String uri, NativeObject headers, String contentType, String body) {
+        NativeObject result = null;
 
         if (null == uri || uri.isEmpty()) {
-		    String message = "URL parameter is not set.";
-		    this.getLogger().info(message);
-		    throw ExtensionErrorConstructor.construct(message);
+            String message = "URL parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
         }
         if (null == contentType || contentType.isEmpty()) {
-		    String message = "contentType parameter is not set.";
-		    this.getLogger().info(message);
-		    throw ExtensionErrorConstructor.construct(message);
+            String message = "contentType parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
         }
         if (null == body || body.isEmpty()) {
-		    String message = "body parameter is not set.";
-		    this.getLogger().info(message);
-		    throw ExtensionErrorConstructor.construct(message);
+            String message = "body parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
         }
 
-		try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
-	        HttpPost request = null;
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
+            HttpPost request = null;
 
-	        // set params from body
-        	request = new HttpPost(uri);
-        	if (respondsAsStream) {
-        		// Stream.
-//        	    File file = new File("more.txt");
-//        	    FileBody fileBody = new FileBody(file);
-//                FormBodyPart bodyPart = new FormBodyPart("body", fileBody);
-//                bodyPart.addField("filename", file.getName());
-//            	ContentBody contentBody = (ContentBody)bodyPart;
-//                MultipartEntity entity = new MultipartEntity();
-//                entity.addPart("body", contentBody);
-//                request.setEntity(entity);
-        	} else {
-            	// Text.
-            	request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
-        	}
+            // set params from body
+            request = new HttpPost(uri);
+            // Text. body is String
+            request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
 
+            // set contentType
+            request.setHeader("Content-Type", contentType);
 
-        	// set contentType
-	        request.setHeader("Content-Type", contentType);
-
-	        // set heades
-	        if (null != headers) {
+            // set heades
+            if (null != headers) {
                 for (Entry<Object, Object> e : headers.entrySet()){
-                	request.addHeader(e.getKey().toString(), e.getValue().toString());
-        	    }
+                    request.addHeader(e.getKey().toString(), e.getValue().toString());
+                }
             }
 
-	        // execute
-	        HttpResponse res = null;
-			res = httpclient.execute(request);
+            // execute
+            HttpResponse res = null;
+            res = httpclient.execute(request);
 
-			// get Status
-	    	String status = String.valueOf(res.getStatusLine().getStatusCode());
-	        if(res.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-	            System.out.println("StatusCode:" + res.getStatusLine().getStatusCode());
-	            return null;
-	        }
+            // Retrieve the status.
+            int status = res.getStatusLine().getStatusCode();
+            if (status != HttpStatus.SC_OK) {
+                System.out.println("StatusCode:" + status);
+                return null;
+            }
 
-	        // response headers
-	        JSONObject headersJson = new JSONObject();
-	        Header[] resHeaders = res.getAllHeaders();
-	        for (Header header : resHeaders) {
-            	System.out.println(header.getName() + ":" + header.getValue());
-	        	headersJson.put(header.getName(), header.getValue());
-	        }
+            // response headers
+            JSONObject res_headers = new JSONObject();
+            Header[] resHeaders = res.getAllHeaders();
+            for (Header header : resHeaders) {
+                System.out.println(header.getName() + ":" + header.getValue());
+                res_headers.put(header.getName(), header.getValue());
+            }
 
-            // entity
-	        String resBody = "";
-	        HttpEntity resEntity = res.getEntity();
-	        if (resEntity != null) {
-           		// Text only.
-           		resBody = EntityUtils.toString(resEntity, "UTF-8");
-	        }
+            // get entity
+            String res_body = "";
+            HttpEntity resEntity = res.getEntity();
+            if (resEntity != null) {
+            	res_body = EntityUtils.toString(resEntity, "UTF-8");
+            }
 
-	        // set NativeObject
+            // set NativeObject
             result = new NativeObject();
-	        result.put("status", result, status);
-	        result.put("headers", result, headersJson.toString());
-	        result.put("body", result, resBody);
+            result.put("status", result, (Number)status);
+            result.put("headers", result, res_headers);
+            result.put("body", result, res_body);
 
         }catch (Exception e) {
             String message = "An error occurred.";
             this.getLogger().warn(message, e);
             String errorMessage = String.format("%s Cause: [%s]",
-            		message, e.getClass().getName() + ": " + e.getMessage());
+                    message, e.getClass().getName() + ": " + e.getMessage());
             throw ExtensionErrorConstructor.construct(errorMessage);
         }
-    	return result;
+        return result;
+    }
+
+    /**
+     * Post.
+     * @param uri String
+     * @param headers NativeObject
+     * @param contentType String
+     * @param body InputStream
+     * @return NativeObject
+     */
+    @SuppressWarnings("unchecked")
+    @JSFunction
+    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream body) {
+        NativeObject result = null;
+
+        if (null == uri || uri.isEmpty()) {
+            String message = "URL parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
+        }
+        if (null == contentType || contentType.isEmpty()) {
+            String message = "contentType parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
+        }
+        if (null == body) {
+            String message = "body parameter is not set.";
+            this.getLogger().info(message);
+            throw ExtensionErrorConstructor.construct(message);
+        }
+
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
+            HttpPost request = null;
+
+            // set params from body
+            request = new HttpPost(uri);
+            // Text. body is InputStream.
+            request.setEntity(new InputStreamEntity(body));
+
+            // set contentType
+            request.setHeader("Content-Type", contentType);
+
+            // set heades
+            if (null != headers) {
+                for (Entry<Object, Object> e : headers.entrySet()){
+                    request.addHeader(e.getKey().toString(), e.getValue().toString());
+                }
+            }
+
+            // execute
+            HttpResponse res = null;
+            res = httpclient.execute(request);
+
+            // Retrieve the status.
+            int status = res.getStatusLine().getStatusCode();
+            if (status != HttpStatus.SC_OK) {
+                System.out.println("StatusCode:" + status);
+                return null;
+            }
+
+            // response headers
+            JSONObject res_headers = new JSONObject();
+            Header[] resHeaders = res.getAllHeaders();
+            for (Header header : resHeaders) {
+                System.out.println(header.getName() + ":" + header.getValue());
+                res_headers.put(header.getName(), header.getValue());
+            }
+
+            // entity
+            String res_body = "";
+            HttpEntity resEntity = res.getEntity();
+            if (resEntity != null) {
+            	res_body = EntityUtils.toString(resEntity, "UTF-8");
+            }
+
+            // set NativeObject
+            result = new NativeObject();
+            result.put("status", result, (Number)status);
+            result.put("headers", result, (JSONObject)res_headers);
+            result.put("body", result, res_body);
+
+        }catch (Exception e) {
+            String message = "An error occurred.";
+            this.getLogger().warn(message, e);
+            String errorMessage = String.format("%s Cause: [%s]",
+                    message, e.getClass().getName() + ": " + e.getMessage());
+            throw ExtensionErrorConstructor.construct(errorMessage);
+        }
+        return result;
     }
 }
