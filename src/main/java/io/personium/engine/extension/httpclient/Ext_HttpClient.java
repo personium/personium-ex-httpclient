@@ -134,17 +134,38 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
     }
 
     /**
-     * Post.
+     * Post (String).
      * @param uri String
      * @param headers NativeObject
      * @param contentType String
      * @param body String
      * @return NativeObject
      */
-    @SuppressWarnings("unchecked")
     @JSFunction
     public NativeObject post(String uri, NativeObject headers, String contentType, String body) {
-        NativeObject result = null;
+    	return post(uri, headers, contentType, body, null);
+    }
+
+    /**
+     * Post (InputStream).
+     * @param uri String
+     * @param headers NativeObject
+     * @param contentType String
+     * @param body InputStream
+     * @return NativeObject
+     */
+    @JSFunction
+    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream is) {
+    	return post(uri, headers, contentType, null, is);
+    }
+
+	private NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
+    	NativeObject result = null;
+
+    	boolean respondsAsStream = false;
+        if (is != null){
+        	respondsAsStream = true;
+        }
 
         if (null == uri || uri.isEmpty()) {
             String message = "URL parameter is not set.";
@@ -156,10 +177,12 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             this.getLogger().info(message);
             throw ExtensionErrorConstructor.construct(message);
         }
-        if (null == body || body.isEmpty()) {
-            String message = "body parameter is not set.";
-            this.getLogger().info(message);
-            throw ExtensionErrorConstructor.construct(message);
+        if (!respondsAsStream){
+            if (null == body || body.isEmpty()) {
+                String message = "body parameter is not set.";
+                this.getLogger().info(message);
+                throw ExtensionErrorConstructor.construct(message);
+            }
         }
 
         try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
@@ -167,8 +190,14 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
             // set params from body
             request = new HttpPost(uri);
-            // Text. body is String
-            request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
+
+            if (respondsAsStream){
+                // InputStream
+            	request.setEntity(new InputStreamEntity(is));
+            } else {
+                // String
+            	request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
+            }
 
             // set contentType
             request.setHeader("Content-Type", contentType);
@@ -210,95 +239,6 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             result = new NativeObject();
             result.put("status", result, (Number)status);
             result.put("headers", result, res_headers);
-            result.put("body", result, res_body);
-
-        }catch (Exception e) {
-            String message = "An error occurred.";
-            this.getLogger().warn(message, e);
-            String errorMessage = String.format("%s Cause: [%s]",
-                    message, e.getClass().getName() + ": " + e.getMessage());
-            throw ExtensionErrorConstructor.construct(errorMessage);
-        }
-        return result;
-    }
-
-    /**
-     * Post.
-     * @param uri String
-     * @param headers NativeObject
-     * @param contentType String
-     * @param body InputStream
-     * @return NativeObject
-     */
-    @SuppressWarnings("unchecked")
-    @JSFunction
-    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream body) {
-        NativeObject result = null;
-
-        if (null == uri || uri.isEmpty()) {
-            String message = "URL parameter is not set.";
-            this.getLogger().info(message);
-            throw ExtensionErrorConstructor.construct(message);
-        }
-        if (null == contentType || contentType.isEmpty()) {
-            String message = "contentType parameter is not set.";
-            this.getLogger().info(message);
-            throw ExtensionErrorConstructor.construct(message);
-        }
-        if (null == body) {
-            String message = "body parameter is not set.";
-            this.getLogger().info(message);
-            throw ExtensionErrorConstructor.construct(message);
-        }
-
-        try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
-            HttpPost request = null;
-
-            // set params from body
-            request = new HttpPost(uri);
-            // Text. body is InputStream.
-            request.setEntity(new InputStreamEntity(body));
-
-            // set contentType
-            request.setHeader("Content-Type", contentType);
-
-            // set heades
-            if (null != headers) {
-                for (Entry<Object, Object> e : headers.entrySet()){
-                    request.addHeader(e.getKey().toString(), e.getValue().toString());
-                }
-            }
-
-            // execute
-            HttpResponse res = null;
-            res = httpclient.execute(request);
-
-            // Retrieve the status.
-            int status = res.getStatusLine().getStatusCode();
-            if (status != HttpStatus.SC_OK) {
-                System.out.println("StatusCode:" + status);
-                return null;
-            }
-
-            // response headers
-            JSONObject res_headers = new JSONObject();
-            Header[] resHeaders = res.getAllHeaders();
-            for (Header header : resHeaders) {
-                System.out.println(header.getName() + ":" + header.getValue());
-                res_headers.put(header.getName(), header.getValue());
-            }
-
-            // entity
-            String res_body = "";
-            HttpEntity resEntity = res.getEntity();
-            if (resEntity != null) {
-            	res_body = EntityUtils.toString(resEntity, "UTF-8");
-            }
-
-            // set NativeObject
-            result = new NativeObject();
-            result.put("status", result, (Number)status);
-            result.put("headers", result, (JSONObject)res_headers);
             result.put("body", result, res_body);
 
         }catch (Exception e) {
