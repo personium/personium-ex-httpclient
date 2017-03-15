@@ -186,7 +186,7 @@ public class Ext_HttpClientTest {
     // Conversion processing for testing.
     // InputStream to File.
     private void InputStreamToFile(InputStream is, String path, String name) {
-        int BTYESIZE = 1024;
+        int BYTESIZE = 1024;
         FileOutputStream out = null;
         try {
             File file = new File(path, name);
@@ -196,14 +196,14 @@ public class Ext_HttpClientTest {
         }
 
         try {
-            byte [] buffer = new byte[BTYESIZE];
+            byte [] buffer = new byte[BYTESIZE];
             int len = 0;
             while(true) {
                 if ((len = is.read(buffer)) == -1) {
                     throw new EOFException();
                 }
                 out.write(buffer, 0, len);
-                if(len < BTYESIZE) {
+                if(len < BYTESIZE) {
                     break;
                 }
             }
@@ -215,7 +215,7 @@ public class Ext_HttpClientTest {
 
     // File to Base64.
     private String FileToBase64(String file) {
-        int BTYESIZE = 1024;
+        int BYTESIZE = 1024;
         FileInputStream fs = null;
         try {
             fs = new FileInputStream(file);
@@ -223,7 +223,7 @@ public class Ext_HttpClientTest {
             e.printStackTrace();
         }
 
-        byte [] buffer = new byte[BTYESIZE];
+        byte [] buffer = new byte[BYTESIZE];
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             int len = 0;
@@ -232,7 +232,7 @@ public class Ext_HttpClientTest {
                     throw new EOFException();
                 }
                 out.write(buffer, 0, len);
-                if(len < BTYESIZE) {
+                if(len < BYTESIZE) {
                     break;
                 }
             }
