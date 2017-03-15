@@ -164,7 +164,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
     	boolean respondsAsStream = false;
         if (is != null){
-        	respondsAsStream = true;
+            respondsAsStream = true;
         }
 
         if (null == uri || uri.isEmpty()) {
