@@ -1,6 +1,6 @@
 /**
  * personium.io
- * Copyright 2014 FUJITSU LIMITED
+ * Copyright 2017 FUJITSU LIMITED
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class Ext_HttpClientTest {
     // file
     private static final String POST_FILE_PATH        = "/tmp/";
     private static final String POST_WRITE_FILE       = "test_write.jpg";
-    private static final String POST_READ_JPG         = "test_read.jpg";
+    private static final String POST_READ_FILE        = "test_read.jpg";
     private static final String POST_WRITE_BASE64     = "test_jpflag.jpg";
     private static final String BASE64_DATA           = "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYH"
       + "BwcGBwcICQsJCAgKCAcHCg0KCgsMDAwMBwkODw0MDgsMDAz/2wBDAQICAgMDAwYDAwYMCAcIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
@@ -142,7 +142,7 @@ public class Ext_HttpClientTest {
          * NativeObject headers, boolean respondsAsStream
          */
         NativeObject result = ext_httpClient.post(
-            URI_HTTP_POST_TEXT, headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT);
+            URI_HTTP_POST_TEXT, headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT, null);
         Number status = (Number)result.get("status");
         String res_body = (String)result.get("body");
         JSONObject res_headers = (JSONObject)result.get("headers");
@@ -166,15 +166,15 @@ public class Ext_HttpClientTest {
 
         // For Test File operation.
 //        try {
-//            body = FileToInputStream(POST_FILE_PATH + POST_READ_JPG);
+//            body = FileToInputStream(POST_FILE_PATH + POST_READ_FILE);
 //        } catch (FileNotFoundException e) {
 //            e.printStackTrace();
 //        }
 //        InputStreamToFile(body, POST_FILE_PATH, POST_WRITE_BASE64);
-//        body = FileToBase64(POST_FILE_PATH + POST_READ_JPG);
+//        body = FileToBase64(POST_FILE_PATH + POST_READ_FILE);
 
         NativeObject result = ext_httpClient.post(
-              URI_HTTP_POST_STREAM, headers, POST_CONTENT_TYPE, body);
+              URI_HTTP_POST_STREAM, headers, POST_CONTENT_TYPE, null, body);
 
         Number status = (Number)result.get("status");
         JSONObject res_headers = (JSONObject)result.get("headers");

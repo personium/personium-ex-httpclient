@@ -97,7 +97,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
             if (status != HttpStatus.SC_OK) {
-                System.out.println("StatusCode:" + status);
+//                System.out.println("StatusCode:" + status);
                 return null;
             }
 
@@ -141,10 +141,10 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param body String
      * @return NativeObject
      */
-    @JSFunction
-    public NativeObject post(String uri, NativeObject headers, String contentType, String body) {
-    	return post(uri, headers, contentType, body, null);
-    }
+//    @JSFunction
+//    public NativeObject post(String uri, NativeObject headers, String contentType, String body) {
+//    	return post(uri, headers, contentType, body, null);
+//    }
 
     /**
      * Post (InputStream).
@@ -154,12 +154,13 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param body InputStream
      * @return NativeObject
      */
-    @JSFunction
-    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream is) {
-    	return post(uri, headers, contentType, null, is);
-    }
+//    @JSFunction
+//    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream is) {
+//    	return post(uri, headers, contentType, null, is);
+//    }
 
-    private NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
+    @JSFunction
+    public NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
@@ -216,7 +217,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
             if (status != HttpStatus.SC_OK) {
-                System.out.println("StatusCode:" + status);
+//                System.out.println("StatusCode:" + status);
                 return null;
             }
 
@@ -224,7 +225,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             JSONObject res_headers = new JSONObject();
             Header[] resHeaders = res.getAllHeaders();
             for (Header header : resHeaders) {
-                System.out.println(header.getName() + ":" + header.getValue());
+//                System.out.println(header.getName() + ":" + header.getValue());
                 res_headers.put(header.getName(), header.getValue());
             }
 
