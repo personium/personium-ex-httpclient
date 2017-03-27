@@ -19,6 +19,7 @@ package io.personium.engine.extension.httpclient;
 import io.personium.engine.extension.support.AbstractExtensionScriptableObject;
 import io.personium.engine.extension.support.ExtensionErrorConstructor;
 import io.personium.engine.extension.support.ExtensionLogger;
+import io.personium.engine.extension.wrapper.PersoniumInputStream;
 
 import java.io.InputStream;
 import java.util.Map.Entry;
@@ -39,12 +40,17 @@ import org.json.simple.JSONObject;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Engine-Extension HttpClient.
  */
 @SuppressWarnings("serial")
 public class Ext_HttpClient extends AbstractExtensionScriptableObject {
+
+	
+    static Logger log = LoggerFactory.getLogger(Ext_HttpClient.class);
 
     /**
      * Public name to JavaScript.
@@ -70,7 +76,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param respondsAsStream true:stream/false:text
      * @return JSONObject
      */
-    @SuppressWarnings("unchecked")
+//    @SuppressWarnings("unchecked")
     @JSFunction
     public NativeObject get(String uri, NativeObject headers, boolean respondsAsStream) {
         NativeObject result = null;
@@ -92,12 +98,14 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             }
 
             HttpResponse res = null;
+log.debug("execute begin");
             res = httpclient.execute(request);
+log.debug("execute end");
 
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
+log.debug("status:" + status);
             if (status != HttpStatus.SC_OK) {
-//                System.out.println("StatusCode:" + status);
                 return null;
             }
 
@@ -110,13 +118,22 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
             // Set NativeObject.
             result = new NativeObject();
-            result.put("status", result, (Number)status);
-            result.put("headers", result, (JSONObject)res_headers);
+//          result.put("status", result, (Number)status);
+            result.put("status", result, Integer.toString(status));
+            log.debug("set status:" + status);
+
+//          result.put("headers", result, (JSONObject)res_headers);
+            result.put("headers", result, res_headers.toString());
+log.debug("set res_headers:" + res_headers);
+
             HttpEntity entity = res.getEntity();
             if (entity != null) {
                 if (respondsAsStream) {
-                    // InputStream.
-                    result.put("body", result, new BufferedHttpEntity(res.getEntity()).getContent());
+                    // InputStream > PersoniumInputStream.
+                	InputStream is = new BufferedHttpEntity(res.getEntity()).getContent();
+                	PersoniumInputStream pis = new PersoniumInputStream((InputStream) is);
+                	result.put("body", result, (PersoniumInputStream)pis);
+log.debug("set body: InputStream");
                 } else {
                     // String.
                     result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
@@ -133,38 +150,46 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         return result;
     }
 
+    /** 
+     * Post (String). 
+     * @param uri String 
+     * @param headers NativeObject 
+     * @param contentType String 
+     * @param body String 
+     * @return NativeObject 
+     */ 
+    @JSFunction 
+    public NativeObject post(String uri, NativeObject headers, String contentType, String body) { 
+    	return post(uri, headers, contentType, body, null); 
+    } 
+
+    /** 
+     * Post (InputStream). 
+     * @param uri String 
+     * @param headers NativeObject 
+     * @param contentType String 
+     * @param body PersoniumInputStream 
+     * @return NativeObject 
+     */ 
+    @JSFunction 
+    public NativeObject post(String uri, NativeObject headers, String contentType, PersoniumInputStream pis) { 
+    	return post(uri, headers, contentType, null, pis); 
+    } 
+
     /**
-     * Post (String).
+     * Post.
      * @param uri String
      * @param headers NativeObject
      * @param contentType String
      * @param body String
+     * @param is PersoniumInputStream
      * @return NativeObject
      */
-//    @JSFunction
-//    public NativeObject post(String uri, NativeObject headers, String contentType, String body) {
-//    	return post(uri, headers, contentType, body, null);
-//    }
-
-    /**
-     * Post (InputStream).
-     * @param uri String
-     * @param headers NativeObject
-     * @param contentType String
-     * @param body InputStream
-     * @return NativeObject
-     */
-//    @JSFunction
-//    public NativeObject post(String uri, NativeObject headers, String contentType, InputStream is) {
-//    	return post(uri, headers, contentType, null, is);
-//    }
-
-    @JSFunction
-    public NativeObject post(String uri, NativeObject headers, String contentType, String body, InputStream is) {
+    private NativeObject post(String uri, NativeObject headers, String contentType, String body, PersoniumInputStream pis) {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
-        if (is != null){
+        if (pis != null){
             respondsAsStream = true;
         }
 
@@ -194,7 +219,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
             if (respondsAsStream){
                 // InputStream
-            	request.setEntity(new InputStreamEntity(is));
+            	request.setEntity(new InputStreamEntity(pis));
             } else {
                 // String
             	request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
@@ -217,7 +242,6 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
             if (status != HttpStatus.SC_OK) {
-//                System.out.println("StatusCode:" + status);
                 return null;
             }
 
@@ -225,7 +249,6 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             JSONObject res_headers = new JSONObject();
             Header[] resHeaders = res.getAllHeaders();
             for (Header header : resHeaders) {
-//                System.out.println(header.getName() + ":" + header.getValue());
                 res_headers.put(header.getName(), header.getValue());
             }
 
@@ -239,7 +262,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // set NativeObject
             result = new NativeObject();
             result.put("status", result, (Number)status);
-            result.put("headers", result, res_headers);
+            result.put("headers", result, (JSONObject)res_headers);
             result.put("body", result, res_body);
 
         }catch (Exception e) {
@@ -251,4 +274,5 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         }
         return result;
     }
+
 }

@@ -17,6 +17,7 @@
 package io.personium.engine.extension.httpclient;
 
 import static org.junit.Assert.assertEquals;
+import io.personium.engine.extension.wrapper.PersoniumInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -87,10 +88,13 @@ public class Ext_HttpClientTest {
 
     }
 
+    /*
+     * http_get_text.
+     */
     @Test
     public void http_get_text() {
-        NativeObject headers = new NativeObject();
-        headers.put(HEADER_KEY, headers, HEADER_VALUE);
+        NativeObject req_headers = new NativeObject();
+        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
 
         Ext_HttpClient ext_httpClient = new Ext_HttpClient();
 
@@ -98,18 +102,21 @@ public class Ext_HttpClientTest {
          * ext_httpClient.get
          * String uri, NativeObject headers
          */
-        NativeObject result = ext_httpClient.get(URI_HTTP_GET_TEXT, headers, false);
-        Number status = (Number)result.get("status");
-        JSONObject res_headers = (JSONObject)result.get("headers");
-        String body = (String)result.get("body");
+        NativeObject result = ext_httpClient.get(URI_HTTP_GET_TEXT, req_headers, false);
+        String status = (String)result.get("status");
+        String res_headers = (String)result.get("headers");
+        String res_body = (String)result.get("body");
 
-        assertEquals(status, HttpStatus.SC_OK);
+        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
     }
 
+    /*
+     * http_get_stream.
+     */
     @Test
     public void http_get_stream() {
-        NativeObject headers = new NativeObject();
-        headers.put(HEADER_KEY, headers, HEADER_VALUE);
+        NativeObject req_headers = new NativeObject();
+        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
 
         Ext_HttpClient ext_httpClient = new Ext_HttpClient();
 
@@ -117,22 +124,25 @@ public class Ext_HttpClientTest {
          * ext_httpClient.get
          * String uri, NativeObject headers
          */
-        NativeObject result = ext_httpClient.get(URI_HTTP_GET_STREAM, headers, true);
-        Number status = (Number)result.get("status");
-        JSONObject res_headers = (JSONObject)result.get("headers");
-        InputStream is = (InputStream)result.get("body");
+        NativeObject result = ext_httpClient.get(URI_HTTP_GET_STREAM, req_headers, true);
+        String status = (String)result.get("status");
+        String res_headers = (String)result.get("headers");
+        PersoniumInputStream res_body = (PersoniumInputStream)result.get("body");
 
         // stream to write file
         // Confirm the actually acquired image file.
-//        InputStreamToFile(is, POST_FILE_PATH, POST_WRITE_FILE);
+//        InputStreamToFile(res_body, POST_FILE_PATH, POST_WRITE_FILE);
 
-        assertEquals(status, HttpStatus.SC_OK);
+        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
     }
 
+    /*
+     * http_post_text.
+     */
     @Test
     public void http_post_text() {
-        NativeObject headers = new NativeObject();
-        headers.put(HEADER_KEY, headers, HEADER_VALUE);
+        NativeObject req_headers = new NativeObject();
+        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
 
         Ext_HttpClient ext_httpClient = new Ext_HttpClient();
 
@@ -142,49 +152,54 @@ public class Ext_HttpClientTest {
          * NativeObject headers, boolean respondsAsStream
          */
         NativeObject result = ext_httpClient.post(
-            URI_HTTP_POST_TEXT, headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT, null);
-        Number status = (Number)result.get("status");
+            URI_HTTP_POST_TEXT, req_headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT);
+        String status = (String)result.get("status");
         String res_body = (String)result.get("body");
-        JSONObject res_headers = (JSONObject)result.get("headers");
+        String res_headers = (String)result.get("headers");
 
-        assertEquals(status, HttpStatus.SC_OK);
+        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
     }
 
+    /*
+     * http_post_stream.
+     */
     @Test
     public void http_post_stream() {
-        NativeObject headers = new NativeObject();
-        headers.put(HEADER_KEY, headers, HEADER_VALUE);
+        NativeObject req_headers = new NativeObject();
+        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
 
         Ext_HttpClient ext_httpClient = new Ext_HttpClient();
+
+        // For Test File operation.
+//      try {
+//          is = FileToInputStream(POST_FILE_PATH + POST_READ_FILE);
+//      } catch (FileNotFoundException e) {
+//          e.printStackTrace();
+//      }
+//      InputStreamToFile(body, POST_FILE_PATH, POST_WRITE_BASE64);
+//      String base64_str = FileToBase64(POST_FILE_PATH + POST_READ_FILE);
+
+        InputStream is = Base64ToInputStream(BASE64_DATA);
+        PersoniumInputStream pis = new PersoniumInputStream((InputStream) is);
 
         /**
          * ext_httpClient.post stream
          * String uri, String body, String contentType,
          * NativeObject headers, boolean respondsAsStream
          */
-        InputStream body = Base64ToInputStream(BASE64_DATA);
-
-        // For Test File operation.
-//        try {
-//            body = FileToInputStream(POST_FILE_PATH + POST_READ_FILE);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//        InputStreamToFile(body, POST_FILE_PATH, POST_WRITE_BASE64);
-//        body = FileToBase64(POST_FILE_PATH + POST_READ_FILE);
-
         NativeObject result = ext_httpClient.post(
-              URI_HTTP_POST_STREAM, headers, POST_CONTENT_TYPE, null, body);
+              URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis);
 
-        Number status = (Number)result.get("status");
-        JSONObject res_headers = (JSONObject)result.get("headers");
+        String status = (String)result.get("status");
+        String res_headers = (String)result.get("headers");
         String res_body = (String)result.get("body");
 
-        assertEquals(status, HttpStatus.SC_OK);
+        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
     }
 
-    // Conversion processing for testing.
-    // InputStream to File.
+    /*
+     * conversion InputStream to File.
+     */
     private void InputStreamToFile(InputStream is, String path, String name) {
         int BYTESIZE = 1024;
         FileOutputStream out = null;
@@ -203,9 +218,7 @@ public class Ext_HttpClientTest {
                     throw new EOFException();
                 }
                 out.write(buffer, 0, len);
-                if(len < BYTESIZE) {
-                    break;
-                }
+                if(len < BYTESIZE) break;
             }
             out.close();
         } catch (IOException e) {
@@ -213,7 +226,10 @@ public class Ext_HttpClientTest {
         }
     }
 
-    // File to Base64.
+    /*
+     * conversion File to Base64.
+     */
+    @SuppressWarnings("resource")
     private String FileToBase64(String file) {
         int BYTESIZE = 1024;
         FileInputStream fs = null;
@@ -232,9 +248,7 @@ public class Ext_HttpClientTest {
                     throw new EOFException();
                 }
                 out.write(buffer, 0, len);
-                if(len < BYTESIZE) {
-                    break;
-                }
+                if(len < BYTESIZE) break;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -242,12 +256,16 @@ public class Ext_HttpClientTest {
         return new String(Base64.encodeBase64(out.toByteArray()));
     }
 
-    // File to InputStream.
+    /*
+     * conversion File to InputStream.
+     */
     private InputStream FileToInputStream(String file) throws FileNotFoundException {
         return (InputStream) new BufferedInputStream(new FileInputStream(file));
     }
 
-    // Base64 to InputStream
+    /*
+     * conversion Base64 to InputStream
+     */
     private InputStream Base64ToInputStream(String str) {
         return new ByteArrayInputStream(Base64.decodeBase64(str));
     }
