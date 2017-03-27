@@ -151,7 +151,7 @@ public class Ext_HttpClientTest {
          * String uri, String body, String contentType,
          * NativeObject headers, boolean respondsAsStream
          */
-        NativeObject result = ext_httpClient.post(
+        NativeObject result = ext_httpClient.postString(
             URI_HTTP_POST_TEXT, req_headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT);
         String status = (String)result.get("status");
         String res_body = (String)result.get("body");
@@ -187,7 +187,7 @@ public class Ext_HttpClientTest {
          * String uri, String body, String contentType,
          * NativeObject headers, boolean respondsAsStream
          */
-        NativeObject result = ext_httpClient.post(
+        NativeObject result = ext_httpClient.postStream(
               URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis);
 
         String status = (String)result.get("status");

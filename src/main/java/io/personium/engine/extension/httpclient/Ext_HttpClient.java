@@ -154,7 +154,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @return NativeObject 
      */ 
     @JSFunction 
-    public NativeObject post(String uri, NativeObject headers, String contentType, String body) { 
+    public NativeObject postString(String uri, NativeObject headers, String contentType, String body) { 
     	return post(uri, headers, contentType, body, null); 
     } 
 
@@ -167,7 +167,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @return NativeObject 
      */ 
     @JSFunction 
-    public NativeObject post(String uri, NativeObject headers, String contentType, PersoniumInputStream pis) { 
+    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis) { 
     	return post(uri, headers, contentType, null, pis); 
     } 
 
