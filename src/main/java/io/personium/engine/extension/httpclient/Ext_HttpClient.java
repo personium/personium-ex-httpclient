@@ -76,7 +76,6 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param respondsAsStream true:stream/false:text
      * @return JSONObject
      */
-//    @SuppressWarnings("unchecked")
     @JSFunction
     public NativeObject get(String uri, NativeObject headers, boolean respondsAsStream) {
         NativeObject result = null;
@@ -98,13 +97,13 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             }
 
             HttpResponse res = null;
-log.debug("execute begin");
+            log.debug("execute begin");
             res = httpclient.execute(request);
-log.debug("execute end");
+            log.debug("execute end");
 
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
-log.debug("status:" + status);
+            log.debug("status:" + status);
             if (status != HttpStatus.SC_OK) {
                 return null;
             }
@@ -119,12 +118,9 @@ log.debug("status:" + status);
             // Set NativeObject.
             result = new NativeObject();
 //          result.put("status", result, (Number)status);
-            result.put("status", result, Integer.toString(status));
-            log.debug("set status:" + status);
-
 //          result.put("headers", result, (JSONObject)res_headers);
+            result.put("status", result, Integer.toString(status));
             result.put("headers", result, res_headers.toString());
-log.debug("set res_headers:" + res_headers);
 
             HttpEntity entity = res.getEntity();
             if (entity != null) {
@@ -133,7 +129,6 @@ log.debug("set res_headers:" + res_headers);
                 	InputStream is = new BufferedHttpEntity(res.getEntity()).getContent();
                 	PersoniumInputStream pis = new PersoniumInputStream((InputStream) is);
                 	result.put("body", result, (PersoniumInputStream)pis);
-log.debug("set body: InputStream");
                 } else {
                     // String.
                     result.put("body", result, EntityUtils.toString(entity, "UTF-8"));
@@ -164,7 +159,7 @@ log.debug("set body: InputStream");
     } 
 
     /** 
-     * Post (InputStream). 
+     * Post (PersoniumInputStream). 
      * @param uri String 
      * @param headers NativeObject 
      * @param contentType String 
@@ -261,8 +256,8 @@ log.debug("set body: InputStream");
 
             // set NativeObject
             result = new NativeObject();
-            result.put("status", result, (Number)status);
-            result.put("headers", result, (JSONObject)res_headers);
+            result.put("status", result, (String)Integer.toString(status));
+            result.put("headers", result, (String)res_headers.toString());
             result.put("body", result, res_body);
 
         }catch (Exception e) {
