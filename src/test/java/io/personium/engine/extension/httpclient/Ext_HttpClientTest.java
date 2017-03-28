@@ -162,12 +162,12 @@ public class Ext_HttpClientTest {
     /*
      * http_post_stream.
      */
-    @Test
-    public void http_post_stream() {
-        NativeObject req_headers = new NativeObject();
-        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
-
-        Ext_HttpClient ext_httpClient = new Ext_HttpClient();
+//    @Test
+//    public void http_post_stream() {
+//        NativeObject req_headers = new NativeObject();
+//        req_headers.put(HEADER_KEY, req_headers, HEADER_VALUE);
+//
+//        Ext_HttpClient ext_httpClient = new Ext_HttpClient();
 
         // For Test File operation.
 //      try {
@@ -178,23 +178,23 @@ public class Ext_HttpClientTest {
 //      InputStreamToFile(body, POST_FILE_PATH, POST_WRITE_BASE64);
 //      String base64_str = FileToBase64(POST_FILE_PATH + POST_READ_FILE);
 
-        InputStream is = Base64ToInputStream(BASE64_DATA);
-        PersoniumInputStream pis = new PersoniumInputStream((InputStream) is);
+//        InputStream is = Base64ToInputStream(BASE64_DATA);
+//        PersoniumInputStream pis = new PersoniumInputStream((InputStream) is);
 
         /**
          * ext_httpClient.post stream
          * String uri, String body, String contentType,
          * NativeObject headers, boolean respondsAsStream
          */
-        NativeObject result = ext_httpClient.postStream(
-              URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis, "image.jpg");
-
-        String status = (String)result.get("status");
-        String res_headers = (String)result.get("headers");
-        String res_body = (String)result.get("body");
-
-        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
-    }
+//        NativeObject result = ext_httpClient.postStream(
+//              URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis, "image.jpg");
+//
+//        String status = (String)result.get("status");
+//        String res_headers = (String)result.get("headers");
+//        String res_body = (String)result.get("body");
+//
+//        assertEquals(status, Integer.toString(HttpStatus.SC_OK));
+//    }
 
     /*
      * conversion InputStream to File.
@@ -268,5 +268,4 @@ public class Ext_HttpClientTest {
     private InputStream Base64ToInputStream(String str) {
         return new ByteArrayInputStream(Base64.decodeBase64(str));
     }
-
 }

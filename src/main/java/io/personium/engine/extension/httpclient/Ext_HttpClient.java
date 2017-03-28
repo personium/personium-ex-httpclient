@@ -22,11 +22,7 @@ import io.personium.engine.extension.support.ExtensionLogger;
 import io.personium.engine.extension.wrapper.PersoniumInputStream;
 
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -36,9 +32,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -173,10 +166,10 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param fileName String
      * @return NativeObject
      */
-    @JSFunction
-    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis, String fileName) {
-        return post(uri, headers, contentType, null, pis, fileName);
-    }
+//    @JSFunction
+//    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis, String fileName) {
+//        return post(uri, headers, contentType, null, pis, fileName);
+//    }
 
     /**
      * Post.
@@ -193,9 +186,9 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
-        if (pis != null && fileName != null){
-            respondsAsStream = true;
-        }
+//        if (pis != null && fileName != null){
+//            respondsAsStream = true;
+//        }
 
         if (null == uri || uri.isEmpty()) {
             String message = "URL parameter is not set.";
@@ -231,27 +224,12 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // set Stream/Paramaters
             if (respondsAsStream){
                 // InputStream
-                MultipartEntityBuilder meb = MultipartEntityBuilder.create();
-                meb.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-
-                // param を設定する場合
-//                if (params != null){
-//                    entity.setCharset(Charset.forName("UTF-8"));
-//                    ContentType textContentType = ContentType.create("application/json", "UTF-8");
-//             	      entity.addTextBody("auth_token", params, textContentType);
-//                }
-
-                // ファイル名が指定されない場合は、contentTypeから拡張子を取得して日付のファイル名を生成する。
-                if (fileName == null) {
-                	fileName = contentTypeToDateFileName(contentType);
-                }
+//                MultipartEntityBuilder meb = MultipartEntityBuilder.create();
+//                meb.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
            	    // パラメータ名,画像データ,画像のタイプ,画像ファイル名
-                meb.addBinaryBody("upfile", (InputStream)pis, ContentType.create(contentType), fileName);
-           	    post.setEntity(meb.build());
-
-//              post.setEntity(new InputStreamEntity(pis));
-
+//                meb.addBinaryBody("upfile", (InputStream)pis, ContentType.create(contentType), fileName);
+//           	  post.setEntity(meb.build());
             } else {
                 // String
             	post.setEntity(new ByteArrayEntity(params.getBytes("UTF-8")));
@@ -294,21 +272,5 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             throw ExtensionErrorConstructor.construct(errorMessage);
         }
         return result;
-    }
-
-    private static String contentTypeToDateFileName(String contentType) {
-        // create Image FileName
-
-        // ファイル拡張子を取得
-        Pattern pattern = Pattern.compile("image/");
-        Matcher matcher = pattern.matcher(contentType);
-        String strExt = matcher.replaceFirst("");
-        if (strExt == null) strExt = "png";
-
-        // ファイル名を日時から生成
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        Date today = new Date();
-
-        return dateFormat.format(today) + "." + strExt;
     }
 }
