@@ -22,7 +22,11 @@ import io.personium.engine.extension.support.ExtensionLogger;
 import io.personium.engine.extension.wrapper.PersoniumInputStream;
 
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -32,7 +36,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -87,19 +93,17 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         }
 
         try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
-            HttpGet request = new HttpGet(uri);
+            HttpGet get = new HttpGet(uri);
 
             // Set request headers.
             if (null != headers) {
                 for (Entry<Object, Object> e : headers.entrySet()){
-                    request.addHeader(e.getKey().toString(), e.getValue().toString());
+                	get.addHeader(e.getKey().toString(), e.getValue().toString());
                 }
             }
 
             HttpResponse res = null;
-            log.debug("execute begin");
-            res = httpclient.execute(request);
-            log.debug("execute end");
+            res = httpclient.execute(get);
 
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
@@ -117,6 +121,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
 
             // Set NativeObject.
             result = new NativeObject();
+
 //          result.put("status", result, (Number)status);
 //          result.put("headers", result, (JSONObject)res_headers);
             result.put("status", result, Integer.toString(status));
@@ -145,46 +150,50 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         return result;
     }
 
-    /** 
-     * Post (String). 
-     * @param uri String 
-     * @param headers NativeObject 
-     * @param contentType String 
-     * @param body String 
-     * @return NativeObject 
-     */ 
-    @JSFunction 
-    public NativeObject postString(String uri, NativeObject headers, String contentType, String body) { 
-    	return post(uri, headers, contentType, body, null); 
-    } 
+    /**
+     * postParam (String).
+     * @param uri String
+     * @param headers NativeObject
+     * @param contentType String
+     * @param params String
+     * @return NativeObject
+     */
+    @JSFunction
+    public NativeObject postParam(String uri, NativeObject headers, String contentType, String params) {
+        return post(uri, headers, contentType, params, null, null);
+    }
 
-    /** 
-     * Post (PersoniumInputStream). 
-     * @param uri String 
-     * @param headers NativeObject 
-     * @param contentType String 
-     * @param body PersoniumInputStream 
-     * @return NativeObject 
-     */ 
-    @JSFunction 
-    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis) { 
-    	return post(uri, headers, contentType, null, pis); 
-    } 
+    /**
+     * postStream (PersoniumInputStream).
+     * @param uri String
+     * @param headers NativeObject
+     * @param contentType String
+     * @param params String
+     * @param pis PersoniumInputStream
+     * @param fileName String
+     * @return NativeObject
+     */
+    @JSFunction
+    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis, String fileName) {
+        return post(uri, headers, contentType, null, pis, fileName);
+    }
 
     /**
      * Post.
      * @param uri String
      * @param headers NativeObject
      * @param contentType String
-     * @param body String
+     * @param params String
      * @param is PersoniumInputStream
+     * @param fileName String
      * @return NativeObject
      */
-    private NativeObject post(String uri, NativeObject headers, String contentType, String body, PersoniumInputStream pis) {
+    private NativeObject post(String uri, NativeObject headers, String contentType,
+                              String params, PersoniumInputStream pis, String fileName) {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
-        if (pis != null){
+        if (pis != null && fileName != null){
             respondsAsStream = true;
         }
 
@@ -199,7 +208,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             throw ExtensionErrorConstructor.construct(message);
         }
         if (!respondsAsStream){
-            if (null == body || body.isEmpty()) {
+            if (null == params || params.isEmpty()) {
                 String message = "body parameter is not set.";
                 this.getLogger().info(message);
                 throw ExtensionErrorConstructor.construct(message);
@@ -207,32 +216,49 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         }
 
         try (CloseableHttpClient httpclient = HttpClientBuilder.create().build()) {
-            HttpPost request = null;
-
-            // set params from body
-            request = new HttpPost(uri);
-
-            if (respondsAsStream){
-                // InputStream
-            	request.setEntity(new InputStreamEntity(pis));
-            } else {
-                // String
-            	request.setEntity(new ByteArrayEntity(body.getBytes("UTF-8")));
-            }
+            HttpPost post = new HttpPost(uri);
 
             // set contentType
-            request.setHeader("Content-Type", contentType);
+            post.setHeader("Content-Type", contentType);
 
             // set heades
             if (null != headers) {
                 for (Entry<Object, Object> e : headers.entrySet()){
-                    request.addHeader(e.getKey().toString(), e.getValue().toString());
+                	post.addHeader(e.getKey().toString(), e.getValue().toString());
                 }
             }
 
+            // set Stream/Paramaters
+            if (respondsAsStream){
+                // InputStream
+                MultipartEntityBuilder meb = MultipartEntityBuilder.create();
+                meb.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+
+                // param を設定する場合
+//                if (params != null){
+//                    entity.setCharset(Charset.forName("UTF-8"));
+//                    ContentType textContentType = ContentType.create("application/json", "UTF-8");
+//             	      entity.addTextBody("auth_token", params, textContentType);
+//                }
+
+                // ファイル名が指定されない場合は、contentTypeから拡張子を取得して日付のファイル名を生成する。
+                if (fileName == null) {
+                	fileName = contentTypeToDateFileName(contentType);
+                }
+
+           	    // パラメータ名,画像データ,画像のタイプ,画像ファイル名
+                meb.addBinaryBody("upfile", pis, ContentType.create(contentType), fileName);
+           	    post.setEntity(meb.build());
+
+//              post.setEntity(new InputStreamEntity(pis));
+
+            } else {
+                // String
+            	post.setEntity(new ByteArrayEntity(params.getBytes("UTF-8")));
+            }
+
             // execute
-            HttpResponse res = null;
-            res = httpclient.execute(request);
+            HttpResponse res = httpclient.execute(post);
 
             // Retrieve the status.
             int status = res.getStatusLine().getStatusCode();
@@ -270,4 +296,19 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
         return result;
     }
 
+    private static String contentTypeToDateFileName(String contentType) {
+        // create Image FileName
+
+        // ファイル拡張子を取得
+        Pattern pattern = Pattern.compile("image/");
+        Matcher matcher = pattern.matcher(contentType);
+        String strExt = matcher.replaceFirst("");
+        if (strExt == null) strExt = "png";
+
+        // ファイル名を日時から生成
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date today = new Date();
+
+        return dateFormat.format(today) + "." + strExt;
+    }
 }

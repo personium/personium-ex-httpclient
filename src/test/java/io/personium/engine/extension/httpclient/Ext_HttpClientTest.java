@@ -32,7 +32,6 @@ import java.io.InputStream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
-import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -151,7 +150,7 @@ public class Ext_HttpClientTest {
          * String uri, String body, String contentType,
          * NativeObject headers, boolean respondsAsStream
          */
-        NativeObject result = ext_httpClient.postString(
+        NativeObject result = ext_httpClient.postParam(
             URI_HTTP_POST_TEXT, req_headers, POST_CONTENT_TYPE, POST_PARAMS_TEXT);
         String status = (String)result.get("status");
         String res_body = (String)result.get("body");
@@ -188,7 +187,7 @@ public class Ext_HttpClientTest {
          * NativeObject headers, boolean respondsAsStream
          */
         NativeObject result = ext_httpClient.postStream(
-              URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis);
+              URI_HTTP_POST_STREAM, req_headers, POST_CONTENT_TYPE, pis, "image.jpg");
 
         String status = (String)result.get("status");
         String res_headers = (String)result.get("headers");
