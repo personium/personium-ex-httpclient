@@ -247,7 +247,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
                 }
 
            	    // パラメータ名,画像データ,画像のタイプ,画像ファイル名
-                meb.addBinaryBody("upfile", pis, ContentType.create(contentType), fileName);
+                meb.addBinaryBody("upfile", (InputStream)pis, ContentType.create(contentType), fileName);
            	    post.setEntity(meb.build());
 
 //              post.setEntity(new InputStreamEntity(pis));
