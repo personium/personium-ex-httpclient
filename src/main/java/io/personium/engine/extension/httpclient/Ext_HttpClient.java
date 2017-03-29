@@ -115,8 +115,9 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // Set NativeObject.
             result = new NativeObject();
 
-//          result.put("status", result, (Number)status);
-//          result.put("headers", result, (JSONObject)res_headers);
+            // Number、JSONObjectでは動作しないことを確認。そのため、Stringで設定する。
+//            result.put("status", result, (Number)status);
+//            result.put("headers", result, (JSONObject)res_headers);
             result.put("status", result, Integer.toString(status));
             result.put("headers", result, res_headers.toString());
 
@@ -166,6 +167,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
      * @param fileName String
      * @return NativeObject
      */
+// PostのStreamは、動作が確認できていないためコメント。
 //    @JSFunction
 //    public NativeObject postStream(String uri, NativeObject headers, String contentType, PersoniumInputStream pis, String fileName) {
 //        return post(uri, headers, contentType, null, pis, fileName);
@@ -186,7 +188,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
     	NativeObject result = null;
 
     	boolean respondsAsStream = false;
-//        if (pis != null && fileName != null){
+//        if (pis != null){
 //            respondsAsStream = true;
 //        }
 
@@ -224,6 +226,8 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject {
             // set Stream/Paramaters
             if (respondsAsStream){
                 // InputStream
+            	// 画像ファイルを想定しているが、今後、動画等Streamを含めた対応の仕様を決定する必要がある。
+                // POST受け取り用(テスト)のサーバを用意すること。
 //                MultipartEntityBuilder meb = MultipartEntityBuilder.create();
 //                meb.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
