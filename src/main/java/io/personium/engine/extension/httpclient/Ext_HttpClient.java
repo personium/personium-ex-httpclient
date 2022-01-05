@@ -186,7 +186,7 @@ public class Ext_HttpClient extends AbstractExtensionScriptableObject { // CHECK
 // PostのStreamは、動作が確認できていないためコメント。
 //    @JSFunction
 //    public NativeObject postStream(String uri, NativeObject headers, String contentType,
-//            PersoniumInputStream pis, String fileName) {
+//            PersoniumInputStream pis) {
 //        return doPost(uri, headers, contentType, null, pis);
 //    }
 
